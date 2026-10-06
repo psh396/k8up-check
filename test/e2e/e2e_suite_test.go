@@ -28,7 +28,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"https://github.com/psh396/backup-check/test/utils"
+	"github.com/psh396/backup-check/test/utils"
 )
 
 var (
@@ -63,12 +63,44 @@ var _ = BeforeSuite(func() {
 	ExpectWithOffset(1, err).NotTo(HaveOccurred(), "Failed to load the manager image into Kind")
 
 	configureKubectlKubeRC()
+	installDependencyCRDs()
 	setupCertManager()
 })
 
 var _ = AfterSuite(func() {
 	teardownCertManager()
 })
+
+func installDependencyCRDs() {
+	dependencies := []struct {
+		name string
+		url  string
+	}{
+		{
+			name: "servicemonitors.monitoring.coreos.com",
+			url:  "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.89.0/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml",
+		},
+		{
+			name: "backups.k8up.io",
+			url:  "https://raw.githubusercontent.com/k8up-io/k8up/v2.16.0/config/crd/apiextensions.k8s.io/v1/k8up.io_backups.yaml",
+		},
+		{
+			name: "schedules.k8up.io",
+			url:  "https://raw.githubusercontent.com/k8up-io/k8up/v2.16.0/config/crd/apiextensions.k8s.io/v1/k8up.io_schedules.yaml",
+		},
+	}
+	for _, dependency := range dependencies {
+		By("installing " + dependency.name)
+		cmd := exec.Command("kubectl", "apply", "--server-side", "-f", dependency.url)
+		_, err := utils.Run(cmd)
+		ExpectWithOffset(1, err).NotTo(HaveOccurred(), "Failed to install %s", dependency.name)
+
+		cmd = exec.Command("kubectl", "wait", "crd/"+dependency.name,
+			"--for=condition=Established", "--timeout=1m")
+		_, err = utils.Run(cmd)
+		ExpectWithOffset(1, err).NotTo(HaveOccurred(), "CRD %s is not established", dependency.name)
+	}
+}
 
 // Disable kubectl kuberc by default for test isolation.
 // This prevents local kubectl configurations from affecting test behavior.

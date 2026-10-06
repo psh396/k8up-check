@@ -25,12 +25,13 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"https://github.com/psh396/backup-check/test/utils"
+	"github.com/psh396/backup-check/test/utils"
 )
 
 // namespace where the project is deployed in
@@ -79,6 +80,9 @@ var _ = Describe("Manager", Ordered, func() {
 	AfterAll(func() {
 		By("cleaning up the curl pod for metrics")
 		cmd := exec.Command("kubectl", "delete", "pod", "curl-metrics", "-n", namespace)
+		_, _ = utils.Run(cmd)
+
+		cmd = exec.Command("kubectl", "delete", "clusterrolebinding", metricsRoleBindingName, "--ignore-not-found")
 		_, _ = utils.Run(cmd)
 
 		By("undeploying the controller-manager")
@@ -178,8 +182,13 @@ var _ = Describe("Manager", Ordered, func() {
 			cmd := exec.Command("kubectl", "create", "clusterrolebinding", metricsRoleBindingName,
 				"--clusterrole=k8up-check-metrics-reader",
 				fmt.Sprintf("--serviceaccount=%s:%s", namespace, serviceAccountName),
+				"--dry-run=client", "-o", "yaml",
 			)
-			_, err := utils.Run(cmd)
+			binding, err := utils.Run(cmd)
+			Expect(err).NotTo(HaveOccurred(), "Failed to generate ClusterRoleBinding")
+			cmd = exec.Command("kubectl", "apply", "-f", "-")
+			cmd.Stdin = strings.NewReader(binding)
+			_, err = utils.Run(cmd)
 			Expect(err).NotTo(HaveOccurred(), "Failed to create ClusterRoleBinding")
 
 			By("validating that the metrics service is available")

@@ -70,6 +70,7 @@ test: manifests generate fmt vet setup-envtest ## Run tests.
 # CertManager is installed by default; skip with:
 # - CERT_MANAGER_INSTALL_SKIP=true
 KIND_CLUSTER ?= k8up-check-test-e2e
+KIND_NODE_IMAGE ?= kindest/node:v1.35.0
 
 .PHONY: setup-test-e2e
 setup-test-e2e: ## Set up a Kind cluster for e2e tests if it does not exist
@@ -82,7 +83,7 @@ setup-test-e2e: ## Set up a Kind cluster for e2e tests if it does not exist
 			echo "Kind cluster '$(KIND_CLUSTER)' already exists. Skipping creation." ;; \
 		*) \
 			echo "Creating Kind cluster '$(KIND_CLUSTER)'..."; \
-			$(KIND) create cluster --name $(KIND_CLUSTER) ;; \
+			$(KIND) create cluster --name $(KIND_CLUSTER) --image $(KIND_NODE_IMAGE) ;; \
 	esac
 
 .PHONY: test-e2e
