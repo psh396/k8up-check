@@ -1,0 +1,12 @@
+# Example manifests for k8up-check.
+#
+# `kubectl apply -k config/samples/` annotates an existing namespace with the
+# trigger annotation so the operator creates an ad-hoc Backup from a k8up
+# Schedule already present in that namespace. Edit the namespace name in
+# trigger-annotation.yaml before applying.
+#
+# Requires the k8up CRDs to be installed in the cluster.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- trigger-annotation.yaml

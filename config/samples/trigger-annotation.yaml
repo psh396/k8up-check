@@ -1,0 +1,14 @@
+# Annotate an existing project (namespace) to trigger an ad-hoc Backup.
+#
+# Replace `my-project` with your namespace. Applying this merges the trigger
+# annotation onto the existing namespace (kubectl apply does a 3-way merge, so
+# other fields are left untouched). The operator then creates a one-off k8up
+# Backup by copying the spec from a Schedule already present in that namespace.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: my-project
+  annotations:
+    # Names the Schedule to copy the Backup spec from. Leave empty when the
+    # namespace holds exactly one Schedule.
+    k8up.check.backup/trigger: ""
