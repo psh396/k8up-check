@@ -62,12 +62,12 @@ jobs:
 #            --wait \
 #            --timeout 300s
 
-# TODO: Uncomment if Prometheus is enabled
-#      - name: Install Prometheus Operator CRDs
-#        run: |
-#          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-#          helm repo update
-#          helm install prometheus-crds prometheus-community/prometheus-operator-crds
+      - name: Install Prometheus Operator CRDs
+        run: |
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo update
+          helm install prometheus-crds prometheus-community/prometheus-operator-crds
+          kubectl wait --for=condition=Established --timeout=120s crd/servicemonitors.monitoring.coreos.com
 
       - name: Deploy manager via Helm
         run: |
